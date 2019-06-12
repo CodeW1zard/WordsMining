@@ -17,12 +17,11 @@ class Cleaner(object):
     @classmethod
     def preprocess_text(self, rfpath):
         tic = time()
-        print("begin preprocess")
         EOS = '*'
         cnt = 0
         text = open(rfpath, 'r', encoding='UTF-8').readlines()
         text = sum(map(self.remove_punc, text), [])
         text = [EOS + sent + EOS for sent in text]
         cnt = sum(map(len, text))
-        print("end peprocess %.2f    %d words in total" % (time() - tic, cnt))
+        print("peprocess done! %.2fs    %d words in total" % (time() - tic, cnt))
         return text

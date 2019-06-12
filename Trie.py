@@ -44,7 +44,6 @@ class Trie:
 
     def set_entropy(self):
         tic = time()
-        print("begin set entropy")
         node = self.root
         queue = Queue()
         queue.put(node)
@@ -61,7 +60,6 @@ class Trie:
             else:
                 node.entropy = 0
 
-        print("end set tree %.2f" % (time() - tic))
 
     def search(self, word):
         if self.direction == 'prefix':
