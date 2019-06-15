@@ -57,7 +57,7 @@ class Extractor(object):
 
             left_candidate = candidate[:seg_index]
             right_candidate = candidate[seg_index:]
-            # 去除重叠的词，似乎太粗暴，过于倾向于长词，比如‘牛逼’与‘牛逼牛逼牛逼’会选择后者
+
             if left_candidate in self.words:
                 children.add(left_candidate)
             if right_candidate in self.words:
@@ -74,16 +74,24 @@ class Extractor(object):
         if h_l == 0 or h_r == 0:
             return count, 0, 0
 
-        for child in children:
-            del self.words[child]
         max_score = pmi + min(h_l, h_r) - max_score
+
+        for child in children:
+            # 出现次数大于等于子段，选长的
+            if count >= self.words[child]['count']:
+                del self.words[child]
+            elif max_score < self.words[child]['score']:
+                return
+            else:
+                del self.words[child]
         return count, max_score, max_score * count
 
     def extract_words(self, thresh=None):
         # calculate PMI and freq remove dict words
         if thresh:
             for word in tqdm(self.vocabulary):
-                count, score, final = self.score(word)
+                if self.score(word):
+                    count, score, final = self.score(word)
                 if score > thresh:
                     self.words[word] = {"candidate": word,
                                    "count": count, "score": score, "final": final}
