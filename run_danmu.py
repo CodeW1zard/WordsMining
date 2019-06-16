@@ -58,16 +58,16 @@ if __name__ == "__main__":
         write(os.path.join(WFDIR, date+'_danmu.txt'), text)
         texts[date] = text
 
-    '''
-    预处理后，可直接读取
-    '''
-    texts = dict()
-    files = os.listdir(WFDIR)
-    for f in tqdm(files):
-        fpath = os.path.join(WFDIR, f)
-        date = f.split('_')[0]
-        text = read(fpath)
-        texts[date] = text
+    # '''
+    # 预处理后，可直接读取
+    # '''
+    # texts = dict()
+    # files = os.listdir(WFDIR)
+    # for f in tqdm(files):
+    #     fpath = os.path.join(WFDIR, f)
+    #     date = f.split('_')[0]
+    #     text = read(fpath)
+    #     texts[date] = text
 
     ####################################################
     cores = multiprocessing.cpu_count() # 4 danger!!!
