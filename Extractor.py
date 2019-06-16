@@ -1,6 +1,6 @@
+import sys
 import pandas as pd
 from time import time
-from tqdm import tqdm
 
 from Trie import Trie
 from Cleaner import Cleaner
@@ -9,7 +9,7 @@ from Entropy import calculate_entropy, cal_pmi
 
 class Extractor(object):
 
-    def __init__(self, rfpath, max_len=4):
+    def __init__(self, rfpath=None, text=None, max_len=4):
         self.prefixTree = Trie()
         self.suffixTree = Trie(direction='suffix')
 
@@ -18,7 +18,11 @@ class Extractor(object):
         # 想要计n个字的词必须用n+1-gram
         self.max_len = max_len + 1
 
-        text = Cleaner.preprocess_text(rfpath)
+        if rfpath is not None:
+            text = Cleaner.preprocess_text(rfpath)
+        elif text is None:
+            raise ValueError()
+        
         self.buildTreesAndDics(text)
         self.prefixTree.set_entropy()
         self.suffixTree.set_entropy()
@@ -28,9 +32,7 @@ class Extractor(object):
     def buildTreesAndDics(self, text):
         tic = time()
 
-        pbar = tqdm(range(self.max_len))
-        for i in pbar:
-            pbar.set_description("buildTreesAndDics, %d-gram \n" % (i + 1))
+        for i in range(self.max_len):
             n_gram_list = sum(
                 map(lambda x: Cleaner.n_gram(x, i + 1), text), [])
             self.len_dict[i + 1] = len(n_gram_list)
@@ -39,7 +41,7 @@ class Extractor(object):
             for word in n_gram_list:
                 self.prefixTree.insert(word, i + 1)
                 self.suffixTree.insert(word, i + 1)
-        print("build tree done! %.2fs" % (time() - tic))
+            sys.stdout.write('build tree done %d/%d\r' % (i, self.max_len))
 
     def score(self, candidate):
         '''
@@ -89,13 +91,15 @@ class Extractor(object):
     def extract_words(self, thresh=None):
         # calculate PMI and freq remove dict words
         if thresh:
-            for word in tqdm(self.vocabulary):
+            for i, word in enumerate(self.vocabulary):
                 if self.score(word):
                     count, score, final = self.score(word)
                 if score > thresh:
                     self.words[word] = {"candidate": word,
                                    "count": count, "score": score, "final": final}
+                sys.stdout.write('extract words done %d/%d\r' % (i, len(self.vocabulary)))
             words = pd.DataFrame.from_dict(list(self.words.values()))
+            
         else:
             words = pd.DataFrame(self.vocabulary, columns=['candidate'])
             words[['count', 'score', 'final']] = words.apply(

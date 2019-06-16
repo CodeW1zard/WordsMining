@@ -23,7 +23,7 @@ if __name__ == '__main__':
     tic = time()
     args = parser.parse_args()
     rfpath = join(RFDIR, args.fname)
-    extracter = Extractor(rfpath, max_len=args.ngram)
+    extracter = Extractor(rfpath=rfpath, max_len=args.ngram)
     words = extracter.extract_words(thresh=args.thresh)
     if args.save:
         if args.oname:

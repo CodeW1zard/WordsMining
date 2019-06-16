@@ -1,8 +1,13 @@
 import numpy as np
+from collections import Counter
 
+def line_entropy(line):
+    counter = Counter(line)
+    nums = np.array(list(counter.values()))
+    return entropy(nums)
 
 def entropy(x):
-    N = x.sum()
+    N = np.sum(x)
     return np.log2(N) - np.sum(x * np.log2(x)) / N
 
 
