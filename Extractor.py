@@ -57,10 +57,8 @@ class Extractor(object):
             return count, None, None
 
         h_r = calculate_entropy(candidate, self.suffixTree, return_count=False)
-        min_score = np.inf
+        min_score = -np.inf
         for seg_index in range(1, len(candidate)):
-            pmi = cal_pmi(candidate, self.len_dict, seg_index, self.suffixTree)
-
             left_candidate = candidate[:seg_index]
             right_candidate = candidate[seg_index:]
 
@@ -73,9 +71,11 @@ class Extractor(object):
                 right_candidate, self.prefixTree, return_count=False)
             h_l_r = calculate_entropy(
                 left_candidate, self.suffixTree, return_count=False)
+            pmi = cal_pmi(candidate, self.len_dict, seg_index, self.suffixTree)
             score = pmi - min(h_l_r, h_r_l)
-            if score < min_score:
+            if score > min_score:
                 min_score = score
+                
 
         if h_l == 0 or h_r == 0:
             return count, 0, 0
@@ -97,7 +97,6 @@ class Extractor(object):
                 continue
             self.words[word] = {"candidate": word,
                                 "count": count, "score": score, "final": final}
-            sys.stdout.write('extract words done %d/%d\r' %
-                             (i, len(self.vocabulary)))
+            sys.stdout.write('extract words done %d/%d\r' %(i, len(self.vocabulary)))
         words = pd.DataFrame.from_dict(list(self.words.values())).sort_values("final", ascending=False).reset_index(drop=True)
         return words

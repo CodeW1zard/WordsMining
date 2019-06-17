@@ -14,7 +14,7 @@ parser.add_argument("-o", "--oname", required=False,
 parser.add_argument("--thresh", required=False,
                     default=4.0, type=float, dest='thresh')
 parser.add_argument("--count", required=False,
-                    default=20, type=int, dest='count')                    
+                    default=40, type=int, dest='count')                    
 parser.add_argument("-n", "--ngram", required=False,
                     default=8, type=int, dest='ngram')
 parser.add_argument("--save", required=False,
@@ -26,12 +26,13 @@ if __name__ == '__main__':
     tic = time()
     args = parser.parse_args()
     rfpath = join(RFDIR, args.fname)
+    print(args.preprocess, args.count)
     if not args.preprocess:
         try:
             text = open(rfpath, "r").readlines()
         except:
             text = open(rfpath, "r", encoding="utf-8").readlines()
-
+        text = [line.strip() for line in text]
         extracter = Extractor(text=text, max_len=args.ngram)
     else:
         extracter = Extractor(rfpath=rfpath, max_len=args.ngram)
