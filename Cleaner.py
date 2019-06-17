@@ -2,9 +2,6 @@ import re
 from time import time
 from Entropy import line_entropy
 
-with open('data/stop_words.txt', 'r', encoding='utf-8') as rf:
-    stop_words = set(rf.readlines())
-
 class Cleaner(object):
         
     @classmethod
@@ -52,7 +49,6 @@ class Cleaner(object):
         text = sum(map(self.remove_punc, text), [])
         text = [line for line in text if line and line_entropy(line)>=1]
         text = [EOS + sent + EOS for sent in text]
-        cnt = sum(map(len, text))
         return text
 
     @classmethod

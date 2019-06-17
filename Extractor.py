@@ -1,5 +1,6 @@
 import sys
 import pandas as pd
+import numpy as np
 from time import time
 
 from Trie import Trie
@@ -56,7 +57,7 @@ class Extractor(object):
             return count, None, None
 
         h_r = calculate_entropy(candidate, self.suffixTree, return_count=False)
-        max_score = 0
+        min_score = np.inf
         for seg_index in range(1, len(candidate)):
             pmi = cal_pmi(candidate, self.len_dict, seg_index, self.suffixTree)
 
@@ -72,20 +73,20 @@ class Extractor(object):
                 right_candidate, self.prefixTree, return_count=False)
             h_l_r = calculate_entropy(
                 left_candidate, self.suffixTree, return_count=False)
-            score = min(h_l_r, h_r_l)
-            if score > max_score:
-                max_score = score
+            score = pmi - min(h_l_r, h_r_l)
+            if score < min_score:
+                min_score = score
 
         if h_l == 0 or h_r == 0:
             return count, 0, 0
 
-        max_score = pmi + min(h_l, h_r) - max_score
+        min_score += min(h_l, h_r)
 
         for child in children:
             # 出现次数大于等于子段，选长的
-            if count >= self.words[child]['count'] or max_score > self.words[child]['score']:
+            if min_score > self.words[child]['score']:
                 del self.words[child]
-        return count, max_score, max_score * count
+        return count, min_score, min_score * count
 
     def extract_words(self, score_thresh=4.0, cnt_thresh=20):
         # calculate PMI and freq remove dict words
@@ -98,5 +99,5 @@ class Extractor(object):
                                 "count": count, "score": score, "final": final}
             sys.stdout.write('extract words done %d/%d\r' %
                              (i, len(self.vocabulary)))
-        words = pd.DataFrame.from_dict(list(self.words.values()))
+        words = pd.DataFrame.from_dict(list(self.words.values())).sort_values("final", ascending=False).reset_index(drop=True)
         return words

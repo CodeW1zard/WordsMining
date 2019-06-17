@@ -27,7 +27,11 @@ if __name__ == '__main__':
     args = parser.parse_args()
     rfpath = join(RFDIR, args.fname)
     if not args.preprocess:
-        text = open(rfpath, "r").readlines()[:5000]
+        try:
+            text = open(rfpath, "r").readlines()
+        except:
+            text = open(rfpath, "r", encoding="utf-8").readlines()
+
         extracter = Extractor(text=text, max_len=args.ngram)
     else:
         extracter = Extractor(rfpath=rfpath, max_len=args.ngram)
