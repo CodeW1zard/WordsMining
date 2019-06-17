@@ -6,10 +6,6 @@ with open('data/stop_words.txt', 'r', encoding='utf-8') as rf:
     stop_words = set(rf.readlines())
 
 class Cleaner(object):
-
-    @classmethod
-    def diversity(self, sent):
-        counter = Counter(sent)
         
     @classmethod
     def n_gram(self, line, n):
@@ -20,6 +16,33 @@ class Cleaner(object):
         rule = re.compile(r"[^a-zA-Z0-9\u4e00-\u9fa5]")
         line = rule.sub(' ', line).strip().split(' ')
         return line
+
+    @classmethod
+    def z_alg(self, s):
+        n = len(s)
+        z = [0] * n
+        L = 0
+        R = 0
+        for i in range(n):
+            if i > R:
+                L = R = i
+                while R < n and s[R-L] == s[R]:
+                    R += 1
+                z[i] = R-L
+                R -= 1
+            else:
+                k = i-L
+                if z[k] < R-i+1:
+                    z[i] = z[k]
+                else:
+                    L = i
+                    while R < n and s[R-L] == s[R]:
+                        R += 1
+                    z[i] = R-L
+                    R -= 1  
+            if z[i] + i == n:
+                return s[:i]
+        return ''
 
     @classmethod
     def preprocess_text(self, rfpath):
@@ -36,12 +59,27 @@ class Cleaner(object):
     def preprocess_danmu(self, rfpath):
         EOS = '*'
         cnt = 0
-        text = open(rfpath, 'r', encoding='UTF-8').readlines()
+        text = open(rfpath, 'r', encoding='utf-8').readlines()
         num = len('2019-04-08 14:45:24,')
-        text = [line[num:] for line in text]
-        text = sum(map(self.remove_punc, text), [])
-        # 弹幕里很多句子是由一两种字符组成，过滤掉
-        text = [line for line in text if line and line_entropy(line)>=1]
-        text = [EOS + sent + EOS for sent in text]
-        cnt = sum(map(len, text))
-        return text
+        res = []
+        prev_line = ''
+        rule = re.compile(r"[^a-zA-Z0-9\u4e00-\u9fa5]")
+        for i, line in enumerate(text):
+            line = rule.sub(' ', line[num:]).lower()
+            if prev_line == line:
+                continue
+            prev_line = line
+            line = [word for word in line.split() if word and line_entropy(word)>=1]
+            res.extend(line)
+
+        for i, word in enumerate(res):
+            word_ = self.z_alg(word)
+            if word_:
+                res[i] = EOS + word_ + EOS
+            else:
+                res[i] = EOS + word + EOS
+        return res
+
+if __name__ =='__main__':
+    text = Cleaner.preprocess_danmu("data/bilibili_txt/20181222_5_67235555.txt")
+    print(text)

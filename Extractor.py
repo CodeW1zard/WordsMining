@@ -22,7 +22,7 @@ class Extractor(object):
             text = Cleaner.preprocess_text(rfpath)
         elif text is None:
             raise ValueError()
-        
+
         self.buildTreesAndDics(text)
         self.prefixTree.set_entropy()
         self.suffixTree.set_entropy()
@@ -43,7 +43,7 @@ class Extractor(object):
                 self.suffixTree.insert(word, i + 1)
             sys.stdout.write('build tree done %d/%d\r' % (i, self.max_len))
 
-    def score(self, candidate):
+    def score(self, candidate, cnt_thresh):
         '''
         淘宝
         h_r_l:宝的左信息熵
@@ -52,6 +52,9 @@ class Extractor(object):
         children = set()
         h_l, count = calculate_entropy(
             candidate, self.prefixTree, return_count=True)
+        if count < cnt_thresh:
+            return count, None, None
+
         h_r = calculate_entropy(candidate, self.suffixTree, return_count=False)
         max_score = 0
         for seg_index in range(1, len(candidate)):
@@ -72,7 +75,7 @@ class Extractor(object):
             score = min(h_l_r, h_r_l)
             if score > max_score:
                 max_score = score
-                
+
         if h_l == 0 or h_r == 0:
             return count, 0, 0
 
@@ -80,31 +83,20 @@ class Extractor(object):
 
         for child in children:
             # 出现次数大于等于子段，选长的
-            if count >= self.words[child]['count']:
-                del self.words[child]
-            elif max_score < self.words[child]['score']:
-                return
-            else:
+            if count >= self.words[child]['count'] or max_score > self.words[child]['score']:
                 del self.words[child]
         return count, max_score, max_score * count
 
-    def extract_words(self, thresh=None):
+    def extract_words(self, score_thresh=4.0, cnt_thresh=20):
         # calculate PMI and freq remove dict words
-        if thresh:
-            for i, word in enumerate(self.vocabulary):
-                if self.score(word):
-                    count, score, final = self.score(word)
-                if score > thresh:
-                    self.words[word] = {"candidate": word,
-                                   "count": count, "score": score, "final": final}
-                sys.stdout.write('extract words done %d/%d\r' % (i, len(self.vocabulary)))
-            words = pd.DataFrame.from_dict(list(self.words.values()))
-            
-        else:
-            words = pd.DataFrame(self.vocabulary, columns=['candidate'])
-            words[['count', 'score', 'final']] = words.apply(
-                lambda x: pd.Series(self.score(x['candidate'])), axis=1)
-        if words.shape[0]:
-            words = words.sort_values(
-                "final", ascending=False).reset_index(drop=True)
+        for i, word in enumerate(self.vocabulary):
+            res = self.score(word, cnt_thresh)
+            count, score, final = res
+            if score is None or score < score_thresh:
+                continue
+            self.words[word] = {"candidate": word,
+                                "count": count, "score": score, "final": final}
+            sys.stdout.write('extract words done %d/%d\r' %
+                             (i, len(self.vocabulary)))
+        words = pd.DataFrame.from_dict(list(self.words.values()))
         return words

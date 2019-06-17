@@ -48,7 +48,8 @@ if __name__ == "__main__":
     '''
     files = os.listdir(RFDIR)
     fdf = list(map(info, files))
-    fdf = pd.DataFrame(data=fdf, columns=['date', 'rank', 'cid', 'fname'])
+    fdf = pd.DataFrame(data=fdf, columns=['date', 'rank', 'cid', 'fname']).sort_values(['date', 'rank'])
+    fdf = fdf[fdf['rank'] <= 15]
     fdf['fpath'] = fdf.apply(lambda x:os.path.join(RFDIR, x['fname']), axis=1)
     texts = dict()
     for date, frame in tqdm(fdf.groupby('date')['fpath']):
@@ -70,15 +71,15 @@ if __name__ == "__main__":
     #     texts[date] = text
 
     ####################################################
-    cores = multiprocessing.cpu_count() # 4 danger!!!
-    pool = multiprocessing.Pool(processes=cores)
+    # cores = multiprocessing.cpu_count() # 4 danger!!!
+    # pool = multiprocessing.Pool(processes=cores)
     ####################################################
 
-    tic = time()
-    cnt = 1
-    for result in pool.imap_unordered(extract, texts.items()):
-        words, date = result
-        sys.stdout.write('done %d/%d\r' % (cnt, len(texts)))
-        words.to_excel(os.path.join(OFDIR, date+".xlsx"), index=False, encoding="utf_8_sig")
-        cnt += 1
-    print("extract done %.2"%(time() - tic))
+    # tic = time()
+    # cnt = 1
+    # for result in pool.imap_unordered(extract, texts.items()):
+    #     words, date = result
+    #     sys.stdout.write('done %d/%d\r' % (cnt, len(texts)))
+    #     words.to_excel(os.path.join(OFDIR, date+".xlsx"), index=False, encoding="utf_8_sig")
+    #     cnt += 1
+    # print("extract done %.2f"%(time() - tic))
