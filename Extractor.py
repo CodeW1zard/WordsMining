@@ -57,7 +57,7 @@ class Extractor(object):
             return count, None, None
 
         h_r = calculate_entropy(candidate, self.suffixTree, return_count=False)
-        min_score = -np.inf
+        min_score = np.inf
         for seg_index in range(1, len(candidate)):
             left_candidate = candidate[:seg_index]
             right_candidate = candidate[seg_index:]
@@ -73,7 +73,7 @@ class Extractor(object):
                 left_candidate, self.suffixTree, return_count=False)
             pmi = cal_pmi(candidate, self.len_dict, seg_index, self.suffixTree)
             score = pmi - min(h_l_r, h_r_l)
-            if score > min_score:
+            if score < min_score:
                 min_score = score
                 
 

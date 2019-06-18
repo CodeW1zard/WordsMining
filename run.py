@@ -18,7 +18,7 @@ parser.add_argument("--count", required=False,
 parser.add_argument("-n", "--ngram", required=False,
                     default=8, type=int, dest='ngram')
 parser.add_argument("--save", required=False,
-                    default=False, type=bool, dest='save')
+                    default=True, type=bool, dest='save')
 parser.add_argument("--preprocess", required=False,
                     default=False, type=bool, dest='preprocess')
 

@@ -4,7 +4,6 @@ import multiprocessing
 import pandas as pd
 
 from time import time
-from tqdm import tqdm
 from Extractor import Extractor
 from Cleaner import Cleaner
 
@@ -52,12 +51,13 @@ if __name__ == "__main__":
     fdf = fdf[fdf['rank'] <= 15]
     fdf['fpath'] = fdf.apply(lambda x:os.path.join(RFDIR, x['fname']), axis=1)
     texts = dict()
-    for date, frame in tqdm(fdf.groupby('date')['fpath']):
+    for i, (date, frame) in enumerate(fdf.groupby('date')['fpath']):
         text = []
         for fpath in frame:
             text.extend(Cleaner.preprocess_danmu(fpath))
         write(os.path.join(WFDIR, date+'_danmu.txt'), text)
         texts[date] = text
+        sys.stdout.write('preprocess done %d/%d\r' %(i, len(fdf.date.unique().size)))
 
     # '''
     # 预处理后，可直接读取
@@ -80,6 +80,6 @@ if __name__ == "__main__":
     # for result in pool.imap_unordered(extract, texts.items()):
     #     words, date = result
     #     sys.stdout.write('done %d/%d\r' % (cnt, len(texts)))
-    #     words.to_excel(os.path.join(OFDIR, date+".xlsx"), index=False, encoding="utf_8_sig")
+    #     words.to_csv(os.path.join(OFDIR, date+".xlsx"), index=False, encoding="utf_8_sig")
     #     cnt += 1
     # print("extract done %.2f"%(time() - tic))
